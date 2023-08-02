@@ -21,10 +21,6 @@ namespace Com.Ambassador.Service.Sales.Lib.BusinessLogic.Logic.GarmentSalesContr
             throw new NotImplementedException();
         }
 
-        public HashSet<long> GetGSalesContractIds(long id)
-        {
-            return new HashSet<long>(DbSet.Where(d => d.GarmentSalesContract.Id == id).Select(d => d.Id));
-        }
 
         public override void UpdateAsync(long id, GarmentSalesContractItem model)
         {

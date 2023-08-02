@@ -85,7 +85,7 @@ namespace Com.Ambassador.Service.Sales.WebApi.Controllers
                     Dictionary<string, object> bank = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonBank.ToString());
 
                     string buyerType = buyer["Type"] != null ? buyer["Type"].ToString() : "";
-                    if (buyerType!= "Ekspor")
+                    if (viewModel.SCType != "Ekspor")
                     {
                         GarmentSalesContractLocalPDFTemplate PdfTemplate = new GarmentSalesContractLocalPDFTemplate();
                         MemoryStream stream = PdfTemplate.GeneratePdfTemplate(viewModel, Facade, timeoffsset, buyer, bank);
@@ -93,7 +93,7 @@ namespace Com.Ambassador.Service.Sales.WebApi.Controllers
                         // await Facade.UpdatePrinted(Id, model);
                         return new FileStreamResult(stream, "application/pdf")
                         {
-                            FileDownloadName = "Sales Contract" + viewModel.SalesContractNo + ".pdf"
+                            FileDownloadName = "Sales Contract " + viewModel.SalesContractNo + ".pdf"
                         };
                     }
                     else
@@ -104,10 +104,48 @@ namespace Com.Ambassador.Service.Sales.WebApi.Controllers
                         // await Facade.UpdatePrinted(Id, model);
                         return new FileStreamResult(stream, "application/pdf")
                         {
-                            FileDownloadName = "Sales Contract" + viewModel.SalesContractNo + ".pdf"
+                            FileDownloadName = "Sales Contract " + viewModel.SalesContractNo + ".pdf"
                         };
                     }
                     
+                }
+            }
+            catch (Exception e)
+            {
+                Dictionary<string, object> Result =
+                    new ResultFormatter(ApiVersion, Common.INTERNAL_ERROR_STATUS_CODE, e.Message)
+                    .Fail();
+                return StatusCode(Common.INTERNAL_ERROR_STATUS_CODE, Result);
+            }
+        }
+
+        [HttpGet("by-ro/{ro}")]
+        public IActionResult GetByRO([FromRoute] string ro)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                GarmentSalesContract model = Facade.ReadByRO(ro);
+
+                if (model == null)
+                {
+                    Dictionary<string, object> Result =
+                        new ResultFormatter(ApiVersion, Common.NOT_FOUND_STATUS_CODE, Common.NOT_FOUND_MESSAGE)
+                        .Fail();
+                    return NotFound(Result);
+                }
+                else
+                {
+                    GarmentSalesContractViewModel viewModel = Mapper.Map<GarmentSalesContractViewModel>(model);
+
+                    Dictionary<string, object> Result =
+                    new ResultFormatter(ApiVersion, Common.OK_STATUS_CODE, Common.OK_MESSAGE)
+                        .Ok<GarmentSalesContractViewModel>(viewModel);
+                    return Ok(Result);
                 }
             }
             catch (Exception e)

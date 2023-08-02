@@ -16,7 +16,7 @@ namespace Com.Ambassador.Service.Sales.Lib.Models.CostCalculationGarments
         [MaxLength(50)]
         public string RO_Number { get; set; }
         //public string RO { get; set; }
-        [MaxLength(50)]
+        [MaxLength(1000)]
         public string Article { get; set; }
         [MaxLength(50)]
         public string ComodityID { get; set; }
@@ -104,11 +104,19 @@ namespace Com.Ambassador.Service.Sales.Lib.Models.CostCalculationGarments
         public string BuyerBrandCode { get; set; }
         [MaxLength(255)]
         public string BuyerBrandName { get; set; }
+
+        //SCGarmentROId
         public long? SCGarmentId { get; set; }
 
         public long PreSCId { get; set; }
         [MaxLength(255)]
         public string PreSCNo { get; set; }
+
+        public int BookingOrderId { get; set; }
+        [MaxLength(255)]
+        public string BookingOrderNo { get; set; }
+        public double BOQuantity { get; set; }
+        public int BookingOrderItemId { get; set; }
 
         public bool IsApprovedMD { get; set; }
         public DateTimeOffset ApprovedMDDate { get; set; }

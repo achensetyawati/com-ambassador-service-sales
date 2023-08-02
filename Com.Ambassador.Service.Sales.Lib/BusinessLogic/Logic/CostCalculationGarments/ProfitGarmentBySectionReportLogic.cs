@@ -1,4 +1,5 @@
-﻿using Com.Ambassador.Service.Sales.Lib.Models.CostCalculationGarments;
+﻿using Com.Ambassador.Service.Sales.Lib.Helpers;
+using Com.Ambassador.Service.Sales.Lib.Models.CostCalculationGarments;
 using Com.Ambassador.Service.Sales.Lib.Services;
 using Com.Ambassador.Service.Sales.Lib.Utilities.BaseClass;
 using Com.Ambassador.Service.Sales.Lib.ViewModels.CostCalculationGarment;
@@ -14,12 +15,16 @@ namespace Com.Ambassador.Service.Sales.Lib.BusinessLogic.Logic.CostCalculationGa
     public class ProfitGarmentBySectionReportLogic : BaseMonitoringLogic<ProfitGarmentBySectionReportViewModel>
     {
         private IIdentityService identityService;
+        private IHttpClientService httpClientService;
         private SalesDbContext dbContext;
         private DbSet<CostCalculationGarment> dbSet;
 
-        public ProfitGarmentBySectionReportLogic(IIdentityService identityService, SalesDbContext dbContext)
+        private string buyerUri = "master/garment-buyers/all";
+
+        public ProfitGarmentBySectionReportLogic(IIdentityService identityService, SalesDbContext dbContext, IHttpClientService httpClientService)
         {
             this.identityService = identityService;
+            this.httpClientService = httpClientService;
             this.dbContext = dbContext;
             dbSet = dbContext.Set<CostCalculationGarment>();
         }
@@ -44,6 +49,8 @@ namespace Com.Ambassador.Service.Sales.Lib.BusinessLogic.Logic.CostCalculationGa
                 var filterDate = _filter.dateTo.GetValueOrDefault().ToOffset(TimeSpan.FromHours(identityService.TimezoneOffset)).AddDays(1).Date;
                 Query = Query.Where(cc => cc.DeliveryDate.AddHours(identityService.TimezoneOffset).Date < filterDate);
             }
+
+            IQueryable<ViewModels.IntegrationViewModel.BuyerViewModel> buyerQ = GetGarmentBuyer().AsQueryable();
 
             Query = Query.OrderBy(o => o.Section).ThenBy(o => o.BuyerBrandCode);
             var newQ = (from a in Query
@@ -76,7 +83,7 @@ namespace Com.Ambassador.Service.Sales.Lib.BusinessLogic.Logic.CostCalculationGa
                             a.CommissionRate,
                             a.CommissionPortion,
                             a.Insurance,
-                            a.Freight
+                            a.Freight,
                         } into G
 
                         select new ProfitGarmentBySectionReportViewModel
@@ -87,6 +94,7 @@ namespace Com.Ambassador.Service.Sales.Lib.BusinessLogic.Logic.CostCalculationGa
                             BuyerName = G.Key.BuyerName,
                             BrandCode = G.Key.BuyerBrandCode,
                             BrandName = G.Key.BuyerBrandName,
+                            Type = buyerQ.Where(x => x.Code == G.Key.BuyerCode).Select(x => x.Type).FirstOrDefault(),
                             RO_Number = G.Key.RO_Number,
                             Comodity = G.Key.Commodity,
                             ComodityDescription = G.Key.CommodityDescription,
@@ -96,6 +104,8 @@ namespace Com.Ambassador.Service.Sales.Lib.BusinessLogic.Logic.CostCalculationGa
                             UOMUnit = G.Key.UOMUnit,
                             DeliveryDate = G.Key.DeliveryDate,
                             ConfirmPrice = G.Key.ConfirmPrice,
+                            HPP = G.Key.RateValue > 1 ? Math.Round(((Math.Round(G.Sum(m => m.GmtCost), 2) + G.Key.OTL1CalculatedRate + G.Key.OTL2CalculatedRate + ((G.Key.Risk / 100) * (Math.Round(G.Sum(m => m.GmtCost), 2) + G.Key.OTL1CalculatedRate + G.Key.OTL2CalculatedRate)) + Math.Round(G.Sum(m => m.Shipfee), 2)) / G.Key.RateValue),2) : Math.Round(G.Sum(m => m.GmtCost), 2) + G.Key.OTL1CalculatedRate + G.Key.OTL2CalculatedRate + ((G.Key.Risk / 100) * (Math.Round(G.Sum(m => m.GmtCost), 2) + G.Key.OTL1CalculatedRate + G.Key.OTL2CalculatedRate)) + Math.Round(G.Sum(m => m.Shipfee), 2),
+            
                             CurrencyRate = G.Key.RateValue,
                             CMPrice = Math.Round(G.Sum(m => m.CMP), 2) / G.Key.RateValue * 1.05,
                             FOBPrice = ((Math.Round(G.Sum(m => m.CMP), 2) / G.Key.RateValue) * 1.05) + G.Key.ConfirmPrice,
@@ -103,8 +113,9 @@ namespace Com.Ambassador.Service.Sales.Lib.BusinessLogic.Logic.CostCalculationGa
                             AccAllow = G.Key.AccessoriesAllowance,
                             Amount = G.Key.Quantity * (((Math.Round(G.Sum(m => m.CMP), 2) / G.Key.RateValue) * 1.05) + G.Key.ConfirmPrice),
                             Commision = G.Key.CommissionPortion,
-                            ProfitIDR = ((G.Key.ConfirmPrice - G.Key.Insurance - G.Key.Freight) * G.Key.RateValue) - G.Key.CommissionRate - Math.Round(G.Sum(m => m.GmtCost), 2) - G.Key.OTL1CalculatedRate - G.Key.OTL2CalculatedRate - ((G.Key.Risk / 100) * (Math.Round(G.Sum(m => m.GmtCost), 2) + G.Key.OTL1CalculatedRate + G.Key.OTL2CalculatedRate)) - Math.Round(G.Sum(m => m.Shipfee), 2),
-                            ProfitUSD = Math.Round(((((G.Key.ConfirmPrice - G.Key.Insurance - G.Key.Freight) * G.Key.RateValue) - G.Key.CommissionRate - Math.Round(G.Sum(m => m.GmtCost), 2) - G.Key.OTL1CalculatedRate - G.Key.OTL2CalculatedRate - ((G.Key.Risk / 100) * (Math.Round(G.Sum(m => m.GmtCost), 2) + G.Key.OTL1CalculatedRate + G.Key.OTL2CalculatedRate)) - Math.Round(G.Sum(m => m.Shipfee), 2)) / G.Key.RateValue), 2),
+                            CommisionIDR = G.Key.CommissionRate,
+                            ProfitIDR = G.Key.RateValue > 1 ? 0 : ((G.Key.ConfirmPrice - G.Key.Insurance - G.Key.Freight) * G.Key.RateValue) - G.Key.CommissionRate - Math.Round(G.Sum(m => m.GmtCost), 2) - G.Key.OTL1CalculatedRate - G.Key.OTL2CalculatedRate - ((G.Key.Risk / 100) * (Math.Round(G.Sum(m => m.GmtCost), 2) + G.Key.OTL1CalculatedRate + G.Key.OTL2CalculatedRate)) - Math.Round(G.Sum(m => m.Shipfee), 2),
+                            ProfitUSD = G.Key.RateValue > 1 ? Math.Round(((((G.Key.ConfirmPrice - G.Key.Insurance - G.Key.Freight) * G.Key.RateValue) - G.Key.CommissionRate - Math.Round(G.Sum(m => m.GmtCost), 2) - G.Key.OTL1CalculatedRate - G.Key.OTL2CalculatedRate - ((G.Key.Risk / 100) * (Math.Round(G.Sum(m => m.GmtCost), 2) + G.Key.OTL1CalculatedRate + G.Key.OTL2CalculatedRate)) - Math.Round(G.Sum(m => m.Shipfee), 2)) / G.Key.RateValue), 2) : 0,
                             ProfitFOB = Math.Round(((((((G.Key.ConfirmPrice - G.Key.Insurance - G.Key.Freight) * G.Key.RateValue) - G.Key.CommissionRate - Math.Round(G.Sum(m => m.GmtCost), 2) - G.Key.OTL1CalculatedRate - G.Key.OTL2CalculatedRate - ((G.Key.Risk / 100) * (Math.Round(G.Sum(m => m.GmtCost), 2) + G.Key.OTL1CalculatedRate + G.Key.OTL2CalculatedRate)) - Math.Round(G.Sum(m => m.Shipfee), 2)) / G.Key.RateValue) * 100) / (((Math.Round(G.Sum(m => m.CMP), 2) / G.Key.RateValue) * 1.05) + G.Key.ConfirmPrice)), 2),
                         });
 
@@ -126,6 +137,7 @@ namespace Com.Ambassador.Service.Sales.Lib.BusinessLogic.Logic.CostCalculationGa
                               BuyerName = a.BuyerName,
                               BrandCode = a.BrandCode,
                               BrandName = a.BrandName,
+                              Type = a.Type,
                               RO_Number = a.RO_Number,
                               Comodity = a.Comodity,
                               ComodityDescription = a.ComodityDescription,
@@ -134,7 +146,9 @@ namespace Com.Ambassador.Service.Sales.Lib.BusinessLogic.Logic.CostCalculationGa
                               Quantity = a.Quantity,
                               UOMUnit = a.UOMUnit,
                               DeliveryDate = a.DeliveryDate,
-                              ConfirmPrice = a.ConfirmPrice,
+                              ConfirmPrice = b.IsFabricCM == "FOB" ? a.ConfirmPrice : 0,
+                              ConfirmPrice1 = b.IsFabricCM == "CMT" ? a.ConfirmPrice : 0,
+                              HPP = a.HPP,
                               CurrencyRate = a.CurrencyRate,
                               CMPrice = a.CMPrice,
                               FOBPrice = a.FOBPrice,
@@ -142,10 +156,11 @@ namespace Com.Ambassador.Service.Sales.Lib.BusinessLogic.Logic.CostCalculationGa
                               AccAllow = a.AccAllow,
                               Amount = a.Amount,
                               Commision = a.Commision,
-                              ProfitIDR = a.ProfitIDR,
-                              ProfitUSD = a.ProfitUSD,
+                              CommisionIDR = a.CommisionIDR,
+                              ProfitIDR = a.ProfitIDR == 0 ? 0 : a.ProfitIDR,
+                              ProfitUSD = a.ProfitUSD == 0 ? 0 : a.ProfitUSD,
                               ProfitFOB = a.ProfitFOB,
-                              TermPayment = b.IsFabricCM
+                              TermPayment = b.IsFabricCM,
                           });
 
             return result;
@@ -156,6 +171,24 @@ namespace Com.Ambassador.Service.Sales.Lib.BusinessLogic.Logic.CostCalculationGa
             public string section { get; set; }
             public DateTimeOffset? dateFrom { get; set; }
             public DateTimeOffset? dateTo { get; set; }
+        }
+
+        public List<ViewModels.IntegrationViewModel.BuyerViewModel> GetGarmentBuyer()
+        {
+            var response = httpClientService.GetAsync($@"{APIEndpoint.Core}{buyerUri}").Result.Content.ReadAsStringAsync();
+
+            if (response != null)
+            {
+                Dictionary<string, object> result = JsonConvert.DeserializeObject<Dictionary<string, object>>(response.Result);
+                var json = result.Single(p => p.Key.Equals("data")).Value;
+                List<ViewModels.IntegrationViewModel.BuyerViewModel> buyerList = JsonConvert.DeserializeObject<List<ViewModels.IntegrationViewModel.BuyerViewModel>>(json.ToString());
+
+                return buyerList;
+            }
+            else
+            {
+                return null;
+            }
         }
     }
 }

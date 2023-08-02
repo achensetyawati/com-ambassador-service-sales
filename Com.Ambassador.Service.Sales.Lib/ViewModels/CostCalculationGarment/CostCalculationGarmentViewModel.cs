@@ -64,6 +64,11 @@ namespace Com.Ambassador.Service.Sales.Lib.ViewModels.CostCalculationGarment
         public long PreSCId { get; set; }
         public string PreSCNo { get; set; }
 
+        public int BookingOrderId { get; set; }
+        public string BookingOrderNo { get; set; }
+        public double BOQuantity { get; set; }
+        public int BookingOrderItemId { get; set; }
+
         public Approval ApprovalMD { get; set; }
         public Approval ApprovalPurchasing { get; set; }
         public Approval ApprovalIE { get; set; }
@@ -123,6 +128,8 @@ namespace Com.Ambassador.Service.Sales.Lib.ViewModels.CostCalculationGarment
                 yield return new ValidationResult("Kuantitas harus diisi", new List<string> { "Quantity" });
             else if (this.Quantity <= 0)
                 yield return new ValidationResult("Kuantitas harus lebih besar dari 0", new List<string> { "Quantity" });
+            else if (this.Quantity > this.BOQuantity)
+                yield return new ValidationResult("Kuantitas tidak boleh lebih dari Remaining Confirm Quantity Booking Order", new List<string> { "Quantity" });
             else if (this.Efficiency == null || this.Efficiency.Id == 0)
                 yield return new ValidationResult("Tidak ditemukan Efisiensi pada kuantitas ini", new List<string> { "Quantity" });
             if (string.IsNullOrWhiteSpace(this.SizeRange))
@@ -131,18 +138,23 @@ namespace Com.Ambassador.Service.Sales.Lib.ViewModels.CostCalculationGarment
                 yield return new ValidationResult("Delivery Date harus diisi", new List<string> { "DeliveryDate" });
             else if (this.DeliveryDate < DateTimeOffset.Now)
                 yield return new ValidationResult("Delivery Date harus lebih besar dari hari ini", new List<string> { "DeliveryDate" });
-            if (this.SMV_Cutting == null)
-                yield return new ValidationResult("SMV Cutting harus diisi", new List<string> { "SMV_Cutting" });
-            else if (this.SMV_Cutting <= 0)
-                yield return new ValidationResult("SMV Cutting harus lebih besar dari 0", new List<string> { "SMV_Cutting" });
-            if (this.SMV_Sewing == null)
-                yield return new ValidationResult("SMV Sewing harus diisi", new List<string> { "SMV_Sewing" });
-            else if (this.SMV_Sewing <= 0)
-                yield return new ValidationResult("SMV Sewing harus lebih besar dari 0", new List<string> { "SMV_Sewing" });
-            if (this.SMV_Finishing == null)
-                yield return new ValidationResult("SMV Finishing harus diisi", new List<string> { "SMV_Finishing" });
-            else if (this.SMV_Finishing <= 0)
-                yield return new ValidationResult("SMV Finishing harus lebih besar dari 0", new List<string> { "SMV_Finishing" });
+            var bj = CostCalculationGarment_Materials.Where(a => a.Product.Code == "BJ001").FirstOrDefault();
+            if(bj == null)
+            {
+                if (this.SMV_Cutting == null)
+                    yield return new ValidationResult("SMV Cutting harus diisi", new List<string> { "SMV_Cutting" });
+                else if (this.SMV_Cutting <= 0)
+                    yield return new ValidationResult("SMV Cutting harus lebih besar dari 0", new List<string> { "SMV_Cutting" });
+                if (this.SMV_Sewing == null)
+                    yield return new ValidationResult("SMV Sewing harus diisi", new List<string> { "SMV_Sewing" });
+                else if (this.SMV_Sewing <= 0)
+                    yield return new ValidationResult("SMV Sewing harus lebih besar dari 0", new List<string> { "SMV_Sewing" });
+                if (this.SMV_Finishing == null)
+                    yield return new ValidationResult("SMV Finishing harus diisi", new List<string> { "SMV_Finishing" });
+                else if (this.SMV_Finishing <= 0)
+                    yield return new ValidationResult("SMV Finishing harus lebih besar dari 0", new List<string> { "SMV_Finishing" });
+
+            }
             if (Buyer == null || string.IsNullOrWhiteSpace(Buyer.Code))
                 yield return new ValidationResult("Buyer harus diisi", new List<string> { "Buyer" });
             if (this.ConfirmPrice == null)

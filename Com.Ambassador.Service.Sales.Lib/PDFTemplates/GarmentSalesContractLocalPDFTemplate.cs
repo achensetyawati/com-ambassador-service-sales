@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
@@ -68,7 +69,7 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             tableBody.AddCell(bodyContentLeft);
             bodyContentLeft.Phrase = new Phrase("Jabatan", normal_font);
             tableBody.AddCell(bodyContentLeft);
-            bodyContentLeft.Phrase = new Phrase(": Direktur Marketing", normal_font);
+            bodyContentLeft.Phrase = new Phrase(": Direktur", normal_font);
             tableBody.AddCell(bodyContentLeft);
             bodyContentLeft.Phrase = new Phrase("", normal_font);
             tableBody.AddCell(bodyContentLeft);
@@ -86,42 +87,33 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             Paragraph1.SpacingAfter = 10f;
             document.Add(Paragraph1);
 
+            string buyerName = buyer["Name"] != null ? buyer["Name"].ToString() : "";
             PdfPTable tableBodyBuyer = new PdfPTable(3);
             tableBodyBuyer.SetWidths(new float[] { 0.004f, 0.010f, 0.060f });
             PdfPCell bodyContentLefts = new PdfPCell() { Border = Rectangle.NO_BORDER, Padding = 1, HorizontalAlignment = Element.ALIGN_LEFT };
             bodyContentLefts.Phrase = new Phrase("2.", normal_font);
             tableBodyBuyer.AddCell(bodyContentLefts);
-            string buyerName = buyer["Name"] != null ? buyer["Name"].ToString() : "";
             bodyContentLefts.Phrase = new Phrase("Nama", normal_font);
             tableBodyBuyer.AddCell(bodyContentLefts);
-            bodyContentLefts.Phrase = new Phrase(": " + "" + buyerName, normal_font);
+            bodyContentLefts.Phrase = new Phrase(": " + "" + viewModel.RecipientName, normal_font);
             tableBodyBuyer.AddCell(bodyContentLefts);
             bodyContentLefts.Phrase = new Phrase("", normal_font);
             tableBodyBuyer.AddCell(bodyContentLefts);
-            //string buyerNik = buyer["NIK"] != null ? buyer["NIK"].ToString() : "";
-            //bodyContentLefts.Phrase = new Phrase("NIK ", normal_font);
-            //tableBodyBuyer.AddCell(bodyContentLefts);
-            //bodyContentLefts.Phrase = new Phrase(": " + " " + buyerNik, normal_font);
-            //tableBodyBuyer.AddCell(bodyContentLefts);
-            //bodyContentLefts.Phrase = new Phrase("", normal_font);
-            //tableBodyBuyer.AddCell(bodyContentLefts);
-            //bodyContentLefts.Phrase = new Phrase("Pekerjaan ", normal_font);
-            //tableBodyBuyer.AddCell(bodyContentLefts);
-            //string buyerJob = buyer["Job"] != null ? buyer["Job"].ToString() : "";
-            //bodyContentLefts.Phrase = new Phrase(":" + " " + buyerJob, normal_font);
-            //tableBodyBuyer.AddCell(bodyContentLefts);
-            //bodyContentLefts.Phrase = new Phrase("", normal_font);
-            //tableBodyBuyer.AddCell(bodyContentLefts);
+            bodyContentLefts.Phrase = new Phrase("Pekerjaan ", normal_font);
+            tableBodyBuyer.AddCell(bodyContentLefts);
+            bodyContentLefts.Phrase = new Phrase(":" + " " + viewModel.RecipientJob, normal_font);
+            tableBodyBuyer.AddCell(bodyContentLefts);
+            bodyContentLefts.Phrase = new Phrase("", normal_font);
+            tableBodyBuyer.AddCell(bodyContentLefts);
             bodyContentLefts.Phrase = new Phrase("Alamat", normal_font);
             tableBodyBuyer.AddCell(bodyContentLefts);
-            string buyerAddress = buyer["Address"] != null ? buyer["Address"].ToString() : "";
-            bodyContentLefts.Phrase = new Phrase(":" + " " + buyerAddress, normal_font);
+            bodyContentLefts.Phrase = new Phrase(":" + " " + viewModel.RecipientAddress, normal_font);
             tableBodyBuyer.AddCell(bodyContentLefts);
             PdfPCell cellBodys = new PdfPCell(tableBodyBuyer); // dont remove
             tableBodyBuyer.ExtendLastRow = false;
             tableBodyBuyer.SpacingAfter = 0.5f;
             document.Add(tableBodyBuyer);
-            string ParagraphStringbuyer = "          Bertindak untuk dan atas nama " + "" + viewModel.BuyerBrandName + "" + ", selanjutnya disebut “Pembeli”";
+            string ParagraphStringbuyer = "          Bertindak untuk dan atas nama " + "" + buyerName + "" + ", selanjutnya disebut “Pembeli”";
             Paragraph Paragraphbuyer = new Paragraph(ParagraphStringbuyer, normal_font) { Alignment = Element.ALIGN_LEFT };
             Paragraphbuyer.SpacingAfter = 10f;
             document.Add(Paragraphbuyer);
@@ -142,24 +134,144 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             document.Add(Paragraph3);
 
             //#region Produk diorder
-            PdfPTable tableOrder = new PdfPTable(2);
+            PdfPTable tableOrder = new PdfPTable(8);
             tableOrder.TotalWidth = 500f;
             tableOrder.LockedWidth = true;
-            float[] widths = new float[] { 5f, 6f };
+            float[] widths = new float[] { 1f, 5f, 5f, 5f, 3f, 4f, 5f, 3f };
             tableOrder.SetWidths(widths);
             tableOrder.HorizontalAlignment = 0;
             tableOrder.SpacingAfter = 20f;
             PdfPCell cellOrder = new PdfPCell() { MinimumHeight = 10, Border = Rectangle.BOTTOM_BORDER | Rectangle.LEFT_BORDER | Rectangle.RIGHT_BORDER | Rectangle.TOP_BORDER, HorizontalAlignment = Element.ALIGN_CENTER };
+            
+            cellOrder.Phrase = new Phrase("No", bold_font_small);
+            tableOrder.AddCell(cellOrder);
+            cellOrder.Phrase = new Phrase("Artikel", bold_font_small);
+            tableOrder.AddCell(cellOrder);
+            cellOrder.Phrase = new Phrase("Material/Konstruksi", bold_font_small);
+            tableOrder.AddCell(cellOrder);
+            cellOrder.Phrase = new Phrase("Keterangan", bold_font_small);
+            tableOrder.AddCell(cellOrder);
+            cellOrder.Phrase = new Phrase("Quantity Order", bold_font_small);
+            tableOrder.AddCell(cellOrder);
+            cellOrder.Phrase = new Phrase("Harga (Exclude PPn)", bold_font_small);
+            tableOrder.AddCell(cellOrder);
+            cellOrder.Phrase = new Phrase("Total Harga (Exclude PPn)", bold_font_small);
+            tableOrder.AddCell(cellOrder);
+            cellOrder.Phrase = new Phrase("Delivery Date", bold_font_small);
+            tableOrder.AddCell(cellOrder);
 
-            cellOrder.Phrase = new Phrase("Jenis Produk", bold_font);
+            var index = 0;
+            double totalQty = 0;
+            double totalPrice = 0;
+            double totalAmount = 0;
+            Dictionary<string, double> totalQtyPerUnit = new Dictionary<string, double>();
+
+            foreach (var ro in viewModel.SalesContractROs)
+            {
+                var getQty = ro.Items.FirstOrDefault(x => x.Quantity == 0); // mengecek apakah qty item yang dimasukkan berjumlah 0
+                if (ro.Items != null && ro.Items.Count > 0 && getQty == null)
+                {
+                    foreach (var item in ro.Items)
+                    {
+                        index++;
+                        cellOrder.Phrase = new Phrase(index.ToString(), normal_font_small);
+                        tableOrder.AddCell(cellOrder);
+                        cellOrder.Phrase = new Phrase(ro.Article, normal_font_small);
+                        tableOrder.AddCell(cellOrder);
+                        cellOrder.Phrase = new Phrase(ro.Material, normal_font_small);
+                        tableOrder.AddCell(cellOrder);
+                        cellOrder.Phrase = new Phrase(item.Description, normal_font_small);
+                        tableOrder.AddCell(cellOrder);
+                        cellOrder.Phrase = new Phrase(item.Quantity.ToString() + " " + ro.Uom.Unit, normal_font_small);
+                        tableOrder.AddCell(cellOrder);
+                        cellOrder.Phrase = new Phrase($"{Number.ToRupiah(item.Price)} / {ro.Uom.Unit}", normal_font_small);
+                        tableOrder.AddCell(cellOrder);
+                        cellOrder.Phrase = new Phrase($"{Number.ToRupiah(item.Price * item.Quantity)}", normal_font_small);
+                        tableOrder.AddCell(cellOrder);
+                        cellOrder.Phrase = new Phrase(ro.DeliveryDate.ToOffset(new TimeSpan(timeoffset, 0, 0)).ToString("dd/MM/yyyy", new CultureInfo("id-ID")), normal_font_small);
+                        tableOrder.AddCell(cellOrder);
+                        totalQty += item.Quantity;
+                        totalPrice += item.Price;
+                        totalAmount += item.Quantity * item.Price;
+
+                        //string key = ro.RONumber + "~" + ro.Uom.Unit;
+
+                        if (!totalQtyPerUnit.ContainsKey(ro.Uom.Unit))
+                        {
+                            totalQtyPerUnit.Add(ro.Uom.Unit, item.Quantity);
+                        }
+                        else
+                        {
+                            totalQtyPerUnit[ro.Uom.Unit] += item.Quantity;
+                        }
+                    }
+                }
+                else
+                {
+                    index++;
+                    cellOrder.Phrase = new Phrase(index.ToString(), normal_font_small);
+                    tableOrder.AddCell(cellOrder);
+                    cellOrder.Phrase = new Phrase(ro.Article, normal_font_small);
+                    tableOrder.AddCell(cellOrder);
+                    cellOrder.Phrase = new Phrase(ro.Material, normal_font_small);
+                    tableOrder.AddCell(cellOrder);
+                    cellOrder.Phrase = new Phrase(ro.Description, normal_font_small);
+                    tableOrder.AddCell(cellOrder);
+                    cellOrder.Phrase = new Phrase(ro.Quantity.ToString() + " " + ro.Uom.Unit, normal_font_small);
+                    tableOrder.AddCell(cellOrder);
+                    cellOrder.Phrase = new Phrase($"{Number.ToRupiah(ro.Price)} / {ro.Uom.Unit}", normal_font_small);
+                    tableOrder.AddCell(cellOrder);
+                    cellOrder.Phrase = new Phrase($"{Number.ToRupiah(ro.Amount)}", normal_font_small);
+                    tableOrder.AddCell(cellOrder);
+                    cellOrder.Phrase = new Phrase(ro.DeliveryDate.ToOffset(new TimeSpan(timeoffset, 0, 0)).ToString("dd/MM/yyyy", new CultureInfo("id-ID")), normal_font_small);
+                    tableOrder.AddCell(cellOrder);
+                    totalQty += ro.Quantity;
+                    totalPrice += ro.Price;
+                    totalAmount += ro.Amount;
+
+
+                    //string key = ro.RONumber + "~" + ro.Uom.Unit;
+
+                    if (!totalQtyPerUnit.ContainsKey(ro.Uom.Unit))
+                    {
+                        totalQtyPerUnit.Add(ro.Uom.Unit, ro.Quantity);
+                    }
+                    else
+                    {
+                        totalQtyPerUnit[ro.Uom.Unit] += ro.Quantity;
+                    }
+                }
+            }
+
+            cellOrder.Phrase = new Phrase("", bold_font_small);
+            cellOrder.Colspan = 3;
             tableOrder.AddCell(cellOrder);
-            cellOrder.Phrase = new Phrase("Material/Konstruksi", bold_font);
+            cellOrder.Phrase = new Phrase("GRAND TOTAL", bold_font_small);
+            cellOrder.Colspan = 1;
             tableOrder.AddCell(cellOrder);
-            cellOrder.Phrase = new Phrase(viewModel.Description, normal_font);
+
+            //string _totalQtyPerUnit = string.Join(";", totalQtyPerUnit.Select(x => x.Value + " " + x.Key.Split("~").LastOrDefault() + "\n").ToArray());
+            string _totalQtyPerUnit = string.Join(";", totalQtyPerUnit.Select(x => x.Value + " " + x.Key + "\n").ToArray());
+
+            //cellOrder.Phrase = new Phrase(totalQty.ToString() + " " + viewModel.SalesContractROs.First().Uom.Unit, bold_font_small);
+            //tableOrder.AddCell(cellOrder);
+
+            cellOrder.Phrase = new Phrase(_totalQtyPerUnit, bold_font_small);
             tableOrder.AddCell(cellOrder);
-            cellOrder.Phrase = new Phrase(viewModel.Material, normal_font);
+
+            //cellOrder.Phrase = new Phrase($"{Number.ToRupiah(totalPrice)}", bold_font_small);
+            //tableOrder.AddCell(cellOrder);
+
+            cellOrder.Phrase = new Phrase("", bold_font_small);
             tableOrder.AddCell(cellOrder);
+            cellOrder.Phrase = new Phrase($"{Number.ToRupiah(totalAmount)}", bold_font_small);
             tableOrder.AddCell(cellOrder);
+            cellOrder.Phrase = new Phrase("", bold_font_small);
+            tableOrder.AddCell(cellOrder);
+
+            //cellOrder.Phrase = new Phrase(viewModel.Description, normal_font);
+            //tableOrder.AddCell(cellOrder);
+            //tableOrder.AddCell(cellOrder);
 
 
 
@@ -195,56 +307,14 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             tableDetailOrder.HorizontalAlignment = 0;
             PdfPCell cellDetailOrder = new PdfPCell() { MinimumHeight = 10, Border = Rectangle.BOTTOM_BORDER | Rectangle.LEFT_BORDER | Rectangle.RIGHT_BORDER | Rectangle.TOP_BORDER, HorizontalAlignment = Element.ALIGN_MIDDLE };
             PdfPCell CellDetailCenter = new PdfPCell() { MinimumHeight = 10, Border = Rectangle.BOTTOM_BORDER | Rectangle.LEFT_BORDER | Rectangle.RIGHT_BORDER | Rectangle.TOP_BORDER, HorizontalAlignment = Element.ALIGN_CENTER };
-            cellDetailOrder.Phrase = new Phrase("Jumlah", bold_font);
-            tableDetailOrder.AddCell(cellDetailOrder);
-            CellDetailCenter.Phrase = new Phrase(viewModel.Quantity.ToString() + " " + viewModel.Uom.Unit, normal_font);
-            tableDetailOrder.AddCell(CellDetailCenter);
-            cellDetailOrder.Phrase = new Phrase("Harga", bold_font);
-            tableDetailOrder.AddCell(cellDetailOrder);
-            int index = 0;
-            
-            if (viewModel.Items!=null && viewModel.Items.Count > 0)
-            {
-                foreach (var detail in viewModel.Items)
-                {
-                    
-                    index++;
-                    if (index == 1)
-                    {
-                        CellDetailCenter.Phrase = new Phrase($"{Number.ToRupiah(detail.Price)} (Exclude PPN)", normal_font);
-                        tableDetailOrder.AddCell(CellDetailCenter);
-                    }
-                    else
-                    {
-                        CellDetailCenter.Phrase = new Phrase(" ", normal_font);
-                        tableDetailOrder.AddCell(CellDetailCenter);
-                        CellDetailCenter.Phrase = new Phrase($"{Number.ToRupiah(detail.Price)} (Exclude PPN)", normal_font);
-                        tableDetailOrder.AddCell(CellDetailCenter);
-                    }
-                }
-
-            }
-            else
-            {
-                CellDetailCenter.Phrase = new Phrase($"{Number.ToRupiah(viewModel.Price)} (Exclude PPN)", normal_font);
-                tableDetailOrder.AddCell(CellDetailCenter);
-            }
+           
             cellDetailOrder.Phrase = new Phrase("FOB", bold_font);
             tableDetailOrder.AddCell(cellDetailOrder);
             CellDetailCenter.Phrase = new Phrase(viewModel.FOB, normal_font);
             tableDetailOrder.AddCell(CellDetailCenter);
-            cellDetailOrder.Phrase = new Phrase("Total Harga", bold_font);
-            tableDetailOrder.AddCell(cellDetailOrder);
-            //cellDetailOrder.Phrase = new Phrase(Convert.ToString(viewModel.Amount), normal_font);
-            CellDetailCenter.Phrase = new Phrase($"{Number.ToRupiah(viewModel.Amount)} (Exclude PPN)", normal_font);
-            tableDetailOrder.AddCell(CellDetailCenter);
             cellDetailOrder.Phrase = new Phrase("Jenis Packing", bold_font);
             tableDetailOrder.AddCell(cellDetailOrder);
             CellDetailCenter.Phrase = new Phrase(viewModel.Packing, normal_font);
-            tableDetailOrder.AddCell(CellDetailCenter);
-            cellDetailOrder.Phrase = new Phrase("Jadwal Pengiriman", bold_font);
-            tableDetailOrder.AddCell(cellDetailOrder);
-            CellDetailCenter.Phrase = new Phrase(viewModel.DeliveryDate.ToOffset(new TimeSpan(timeoffset, 0, 0)).ToString("dd/MM/yyyy", new CultureInfo("id-ID")), normal_font);
             tableDetailOrder.AddCell(CellDetailCenter);
             cellDetailOrder.Phrase = new Phrase("Ongkos Angkut", bold_font);
             tableDetailOrder.AddCell(cellDetailOrder);
@@ -254,8 +324,6 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             tableDetailOrder.AddCell(cellDetailOrder);
             CellDetailCenter.Phrase = new Phrase(viewModel.Country, normal_font);
             tableDetailOrder.AddCell(CellDetailCenter);
-            //CheckBox checkBox1 = new CheckBox(20, 20, 15, 15, "checkBox1");
-            //page.Annotations.Add(checkBox1);
 
 
             PdfPCell cellDetail = new PdfPCell(tableDetailOrder); // dont remove
@@ -269,11 +337,6 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             cellDetailOrder.VerticalAlignment = Element.ALIGN_TOP;
             tableDetailOrder.AddCell(cellDetailOrder);
 
-            //cellDetailOrder.VerticalAlignment = Element.ALIGN_TOP;
-            //tableDetailOrder.AddCell(cellDetailOrder);
-
-            //tableDetailOrder.SpacingAfter = 10;
-            //document.Add(tableDetailOrder);
 
             string ParagraphString5 = "C. Metode Pembayaran";
             Paragraph Paragraph5 = new Paragraph(ParagraphString5, bold_font) { Alignment = Element.ALIGN_LEFT };
@@ -345,7 +408,6 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             tableSignature.SetWidths(widthsSignature);
             tableSignature.HorizontalAlignment = 0;
             tableSignature.SpacingBefore = 20f;
-            tableSignature.SpacingAfter = 20f;
             tableSignature.HorizontalAlignment = Element.ALIGN_RIGHT;
             PdfPCell cellSignature = new PdfPCell() { MinimumHeight = 10, Border = Rectangle.BOTTOM_BORDER | Rectangle.LEFT_BORDER | Rectangle.RIGHT_BORDER | Rectangle.TOP_BORDER, HorizontalAlignment = Element.ALIGN_CENTER };
             PdfPCell cellBottomSignature = new PdfPCell() { MinimumHeight = 40, Border = Rectangle.BOTTOM_BORDER | Rectangle.LEFT_BORDER | Rectangle.RIGHT_BORDER | Rectangle.TOP_BORDER, HorizontalAlignment = Element.ALIGN_CENTER };
@@ -359,7 +421,6 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             tableSignature.AddCell(cellBottomSignature);
             PdfPCell cellSignatures = new PdfPCell(tableSignature); // dont remove
             tableSignature.ExtendLastRow = false;
-            tableSignature.SpacingAfter = 15f;
             document.Add(tableSignature);
             #endregion
 
@@ -424,11 +485,11 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             sublist3.IndentationLeft = 10f;
             sublist3.PreSymbol = string.Format("{0}.", 3);
             string tanggalClaimTerbilang = NumberToTextIDN.terbilang(viewModel.Claim.GetValueOrDefault());
-            ListItem three = new ListItem("Jika Produk yang diterima Pembeli tidak seuai dengan kesepakatan, maka Pembeli wajib memberitahukan kepada Penjual, berikut dengan bukti yang cukup selambat-lambatnya " + viewModel.Claim + "(" + tanggalClaimTerbilang + ") hari setelah Produk diterima, selanjutnya klaim akan diselesaikan secara terpidah dan tidak dapat dihubungkan dan / atau diperhitungkan dengan pembayaran Produk dalam kontak Penjualan ini.", normal_font_small);
+            ListItem three = new ListItem("Jika Produk yang diterima Pembeli tidak sesuai dengan kesepakatan, maka Pembeli wajib memberitahukan kepada Penjual, berikut dengan bukti yang cukup selambat-lambatnya " + viewModel.Claim + "(" + tanggalClaimTerbilang + ") hari setelah Produk diterima, selanjutnya klaim akan diselesaikan secara terpidah dan tidak dapat dihubungkan dan / atau diperhitungkan dengan pembayaran Produk dalam kontak Penjualan ini.", normal_font_small);
             three.Alignment = Element.ALIGN_JUSTIFIED;
             three.Leading = 13;
             sublist3.Add(three);
-            three = new ListItem("Bilamana dalam jangka waktu tersebut diatas Pembeli tidak mengajukan klaim maka Produk dinyatakan sudah sesuai denan Kontrak Penjualan.", normal_font_small);
+            three = new ListItem("Bilamana dalam jangka waktu tersebut diatas Pembeli tidak mengajukan klaim maka Produk dinyatakan sudah sesuai dengan Kontrak Penjualan.", normal_font_small);
             three.Alignment = Element.ALIGN_JUSTIFIED;
             three.Leading = 13;
             sublist3.Add(three);
@@ -438,7 +499,7 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             List sublist4 = new List(List.UNORDERED);
             sublist4.IndentationLeft = 10f;
             sublist4.ListSymbol = new Chunk("");
-            ListItem four = new ListItem("Dalam hal terjadinya Force Majeure termasuk hal-hal berikut tetapi tidak terbatas pada bencana alam, kebakaran, pemogokan pekerjaan, hambatan lalu lintas, tindakan pemerintah dalam bidang ekonomi dan moneter yang ecara nyata berpengaruh terhadap pelaksanaan Kontrak Penjualan ini maupun hal-hal lain di luar kemampuan Penjual, maka Penjual tidak akan bertanggungjawab atas kegagalan penyerahan atau penyerahan yang tertunda, selanjutnya Penjual dan Pembeli sepakat untuk melakukan peninjauan kembali isi Kontrak Penjualan ini.", normal_font_small);
+            ListItem four = new ListItem("Dalam hal terjadinya Force Majeure termasuk hal-hal berikut tetapi tidak terbatas pada bencana alam, kebakaran, pemogokan pekerjaan, hambatan lalu lintas, tindakan pemerintah dalam bidang ekonomi dan moneter yang secara nyata berpengaruh terhadap pelaksanaan Kontrak Penjualan ini maupun hal-hal lain di luar kemampuan Penjual, maka Penjual tidak akan bertanggungjawab atas kegagalan penyerahan atau penyerahan yang tertunda, selanjutnya Penjual dan Pembeli sepakat untuk melakukan peninjauan kembali isi Kontrak Penjualan ini.", normal_font_small);
             four.Alignment = Element.ALIGN_JUSTIFIED;
             four.Leading = 13;
             sublist4.Add(four);
@@ -500,11 +561,11 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
 
             cell_signature.Phrase = new Phrase("( Haenis Gunarto )", normal_font);
             signature.AddCell(cell_signature);
-            cell_signature.Phrase = new Phrase("(" + buyerName + ")", normal_font);
+            cell_signature.Phrase = new Phrase("(" + viewModel.RecipientName + ")", normal_font);
             signature.AddCell(cell_signature);
-            cell_signature.Phrase = new Phrase("Direktur Marketing", normal_font);
+            cell_signature.Phrase = new Phrase("PT Ambassador Garmindo", normal_font);
             signature.AddCell(cell_signature);
-            cell_signature.Phrase = new Phrase("", normal_font);
+            cell_signature.Phrase = new Phrase(buyerName, normal_font);
             signature.AddCell(cell_signature);
             cellIContentRights.Phrase = new Phrase("");
             signature.AddCell(cellIContentRights);
