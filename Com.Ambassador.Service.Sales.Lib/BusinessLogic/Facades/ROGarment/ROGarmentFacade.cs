@@ -1,12 +1,15 @@
 ﻿using Com.Ambassador.Service.Sales.Lib.BusinessLogic.Interface;
 using Com.Ambassador.Service.Sales.Lib.BusinessLogic.Interface.CostCalculationGarmentLogic;
 using Com.Ambassador.Service.Sales.Lib.BusinessLogic.Interface.ROGarmentInterface;
+using Com.Ambassador.Service.Sales.Lib.BusinessLogic.Logic;
 using Com.Ambassador.Service.Sales.Lib.BusinessLogic.Logic.ROGarmentLogics;
 using Com.Ambassador.Service.Sales.Lib.Helpers;
 using Com.Ambassador.Service.Sales.Lib.Models.CostCalculationGarments;
 using Com.Ambassador.Service.Sales.Lib.Models.ROGarments;
 using Com.Ambassador.Service.Sales.Lib.Services;
 using Com.Ambassador.Service.Sales.Lib.Utilities;
+using Com.Ambassador.Service.Sales.Lib.ViewModels.GarmentROViewModels;
+using Com.Moonlay.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -21,19 +24,22 @@ namespace Com.Ambassador.Service.Sales.Lib.BusinessLogic.Facades.ROGarment
     {
         private readonly SalesDbContext DbContext;
         private readonly DbSet<RO_Garment> DbSet;
-        private readonly IdentityService identityService;
         private readonly ROGarmentLogic roGarmentLogic;
         private readonly ICostCalculationGarment costCalGarmentLogic;
         public IServiceProvider ServiceProvider;
+        protected IIdentityService IIdentityService;
 
-        public ROGarmentFacade(IServiceProvider serviceProvider, SalesDbContext dbContext)
+        private readonly LogHistoryLogic logHistoryLogic;
+        public ROGarmentFacade(IServiceProvider serviceProvider, SalesDbContext dbContex)
         {
-            DbContext = dbContext;
+            DbContext = dbContex;
             DbSet = DbContext.Set<RO_Garment>();
-            identityService = serviceProvider.GetService<IdentityService>();
+            IIdentityService = serviceProvider.GetService<IIdentityService>();
             roGarmentLogic = serviceProvider.GetService<ROGarmentLogic>();
             costCalGarmentLogic = serviceProvider.GetService<ICostCalculationGarment>();
             ServiceProvider = serviceProvider;
+
+            logHistoryLogic = serviceProvider.GetService<LogHistoryLogic>();
         }
         private IAzureImageFacade AzureImageFacade
         {
@@ -164,6 +170,11 @@ namespace Com.Ambassador.Service.Sales.Lib.BusinessLogic.Facades.ROGarment
             return roGarmentLogic.Read(page, size, order, select, keyword, filter);
         }
 
+        public List<RO_ComponentAppsViewModel> RoWithComponent(int page, int size, string order, List<string> select, string keyword, string filter)
+        {
+            return roGarmentLogic.RoWithComponent(page, size, order, select, keyword, filter);
+        }
+
         public async Task<RO_Garment> ReadByIdAsync(int id)
         {
             RO_Garment read = await this.DbSet
@@ -260,6 +271,44 @@ namespace Com.Ambassador.Service.Sales.Lib.BusinessLogic.Facades.ROGarment
                 try
                 {
                     roGarmentLogic.UnpostRO(id);
+                    Updated = await DbContext.SaveChangesAsync();
+                    transaction.Commit();
+                }
+                catch (Exception e)
+                {
+                    transaction.Rollback();
+                    throw e;
+                }
+            }
+            return Updated;
+        }
+
+        public async Task<int> RejectSample(int id, RO_GarmentViewModel viewModel)
+        {
+            int Updated = 0;
+            using (var transaction = DbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    //Update RO Garment
+                    RO_Garment ROGarment = await ReadByIdAsync(id);
+
+                    ROGarment.IsRejected = true;
+                    ROGarment.RejectReason = viewModel.RejectReason;
+                    ROGarment.IsPosted = false;
+                    EntityExtension.FlagForUpdate(ROGarment, IIdentityService.Username, "sales-service");
+
+                    //Update CC
+                    CostCalculationGarment costCalculationGarment = await costCalGarmentLogic.ReadByIdAsync((int)ROGarment.CostCalculationGarmentId);
+                    costCalculationGarment.IsValidatedROMD = false;
+                    costCalculationGarment.ValidationMDBy = null;
+                    costCalculationGarment.ValidationMDDate = DateTimeOffset.MinValue;
+
+                    EntityExtension.FlagForUpdate(costCalculationGarment, IIdentityService.Username, "sales-service");
+
+                    //Create Log History
+                    logHistoryLogic.Create("PENJUALAN", "Reject RO Garment - " + costCalculationGarment.RO_Number, viewModel.RejectReason);
+
                     Updated = await DbContext.SaveChangesAsync();
                     transaction.Commit();
                 }
