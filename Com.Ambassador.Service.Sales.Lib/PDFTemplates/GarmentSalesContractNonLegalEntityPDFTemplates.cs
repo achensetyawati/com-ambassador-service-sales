@@ -15,7 +15,7 @@ using System.Text;
 
 namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
 {
-    public class GarmentSalesContractLocalPDFTemplate
+    public class GarmentSalesContractNonLegalEntityPDFTemplates
     {
         public MemoryStream GeneratePdfTemplate(GarmentSalesContractViewModel viewModel, IGarmentSalesContract facade, int timeoffset, Dictionary<string, object> buyer, Dictionary<string, object> bank)
         {
@@ -55,6 +55,7 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             document.Add(HeaderParagraph);
 
             #region Body
+            string buyerNIK = buyer["NIK"] != null ? buyer["NIK"].ToString() : "";
             PdfPTable tableBody = new PdfPTable(3);
             tableBody.SetWidths(new float[] { 0.004f, 0.009f, 0.060f });
             PdfPCell bodyContentLeft = new PdfPCell() { Border = Rectangle.NO_BORDER, Padding = 1, HorizontalAlignment = Element.ALIGN_LEFT };
@@ -67,12 +68,12 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             tableBody.AddCell(bodyContentLeft);
             bodyContentLeft.Phrase = new Phrase("", normal_font);
             tableBody.AddCell(bodyContentLeft);
-            bodyContentLeft.Phrase = new Phrase("Jabatan", normal_font);
-            tableBody.AddCell(bodyContentLeft);
-            bodyContentLeft.Phrase = new Phrase(": Direktur", normal_font);
-            tableBody.AddCell(bodyContentLeft);
-            bodyContentLeft.Phrase = new Phrase("", normal_font);
-            tableBody.AddCell(bodyContentLeft);
+            //bodyContentLeft.Phrase = new Phrase("NIK", normal_font);
+            //tableBody.AddCell(bodyContentLeft);
+            //bodyContentLeft.Phrase = new Phrase(": ", normal_font);
+            //tableBody.AddCell(bodyContentLeft);
+            //bodyContentLeft.Phrase = new Phrase("", normal_font);
+            //tableBody.AddCell(bodyContentLeft);
             bodyContentLeft.Phrase = new Phrase("Alamat", normal_font);
             tableBody.AddCell(bodyContentLeft);
             bodyContentLeft.Phrase = new Phrase(": JL. Merapi No. 23 Blok E2, Kelurahan Banaran, Kecamatan Grogol, Kabupaten Sukoharjo", normal_font);
@@ -80,15 +81,16 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             PdfPCell cellBody = new PdfPCell(tableBody); // dont remove
             tableBody.ExtendLastRow = false;
             tableBody.SpacingAfter = 0.5f;
-            tableBody.SpacingAfter = 0.5f;
             document.Add(tableBody);
 
-            string ParagraphString1 = "          Bertindak untuk dan atas nama PT Ambassador Garmindo, selanjutnya disebut “Penjual”";
+            string ParagraphString1 = "          Bertindak dalam jabatannya selaku Direktur,  oleh karenanya sah bertindak untuk dan atas nama " +
+                "                               PT Ambassador Garmindo, selanjutnya disebut “Penjual”";
             Paragraph Paragraph1 = new Paragraph(ParagraphString1, normal_font) { Alignment = Element.ALIGN_LEFT };
             Paragraph1.SpacingAfter = 10f;
             document.Add(Paragraph1);
 
             string buyerName = buyer["Name"] != null ? buyer["Name"].ToString() : "";
+            string buyerLawsuit = buyer["Type"] != null ? buyer["Type"].ToString() : "";
             PdfPTable tableBodyBuyer = new PdfPTable(3);
             tableBodyBuyer.SetWidths(new float[] { 0.004f, 0.010f, 0.060f });
             PdfPCell bodyContentLefts = new PdfPCell() { Border = Rectangle.NO_BORDER, Padding = 1, HorizontalAlignment = Element.ALIGN_LEFT };
@@ -96,14 +98,31 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             tableBodyBuyer.AddCell(bodyContentLefts);
             bodyContentLefts.Phrase = new Phrase("Nama", normal_font);
             tableBodyBuyer.AddCell(bodyContentLefts);
-            bodyContentLefts.Phrase = new Phrase(": " + "" + viewModel.RecipientName, normal_font);
+            bodyContentLefts.Phrase = new Phrase(": " + " " + viewModel.RecipientName, normal_font);
             tableBodyBuyer.AddCell(bodyContentLefts);
             bodyContentLefts.Phrase = new Phrase("", normal_font);
             tableBodyBuyer.AddCell(bodyContentLefts);
-            bodyContentLefts.Phrase = new Phrase("Jabatan ", normal_font);
-            tableBodyBuyer.AddCell(bodyContentLefts);
-            bodyContentLefts.Phrase = new Phrase(":" + " " + viewModel.RecipientJob, normal_font);
-            tableBodyBuyer.AddCell(bodyContentLefts);
+            //bodyContentLefts.Phrase = new Phrase("NIK ", normal_font);
+            //tableBodyBuyer.AddCell(bodyContentLefts);
+            //bodyContentLefts.Phrase = new Phrase(":" + " " + buyerNIK, normal_font);
+            //tableBodyBuyer.AddCell(bodyContentLefts);
+            if (buyerLawsuit != "Badan Hukum")
+            {
+                bodyContentLefts.Phrase = new Phrase("NIK ", normal_font);
+                tableBodyBuyer.AddCell(bodyContentLefts);
+
+                bodyContentLefts.Phrase = new Phrase(": " + buyerNIK, normal_font);
+                tableBodyBuyer.AddCell(bodyContentLefts);
+            }
+            else
+            {
+                bodyContentLefts.Phrase = new Phrase("Jabatan ", normal_font);
+                tableBodyBuyer.AddCell(bodyContentLefts);
+
+                bodyContentLefts.Phrase = new Phrase(": " + viewModel.RecipientJob , normal_font);
+                tableBodyBuyer.AddCell(bodyContentLefts);
+            }
+
             bodyContentLefts.Phrase = new Phrase("", normal_font);
             tableBodyBuyer.AddCell(bodyContentLefts);
             bodyContentLefts.Phrase = new Phrase("Alamat", normal_font);
@@ -114,15 +133,17 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             tableBodyBuyer.ExtendLastRow = false;
             tableBodyBuyer.SpacingAfter = 0.5f;
             document.Add(tableBodyBuyer);
-            string ParagraphStringbuyer = "          Bertindak untuk dan atas nama " + "" + buyerName + "" + ", selanjutnya disebut “Pembeli”";
+            //string ParagraphStringbuyer = "          Bertindak untuk dan atas nama " + "" + buyerName + "" + ", selanjutnya disebut “Pembeli”";
+            string ParagraphStringbuyer = "          Bertindak selaku diri sendiri, selanjutnya disebut “Pembeli” Secara bersama-sama Penjual dan Pembeli " +
+                "                     disebut Para Pihak.";
             Paragraph Paragraphbuyer = new Paragraph(ParagraphStringbuyer, normal_font) { Alignment = Element.ALIGN_LEFT };
             Paragraphbuyer.SpacingAfter = 10f;
             document.Add(Paragraphbuyer);
 
-            string ParagraphString2 = "Secara bersama-sama Penjual dan Pembeli disebut Para Pihak ";
-            Paragraph Paragraph2 = new Paragraph(ParagraphString2, normal_font) { Alignment = Element.ALIGN_LEFT };
-            Paragraph2.SpacingAfter = 10f;
-            document.Add(Paragraph2);
+            //string ParagraphString2 = "Secara bersama-sama Penjual dan Pembeli disebut Para Pihak ";
+            //Paragraph Paragraph2 = new Paragraph(ParagraphString2, normal_font) { Alignment = Element.ALIGN_LEFT };
+            //Paragraph2.SpacingAfter = 10f;
+            //document.Add(Paragraph2);
 
             string FirstParagraphString = "Para Pihak tersebut di atas sepakat mengadakan perjanjian jual beli produk yang diproduksi oleh Penjual, dengan spesifikasi dan syarat-syarat sebagai berikut: ";
             Paragraph FirstParagraph = new Paragraph(FirstParagraphString, normal_font) { Alignment = Element.ALIGN_LEFT };
@@ -143,7 +164,7 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             tableOrder.HorizontalAlignment = 0;
             tableOrder.SpacingAfter = 20f;
             PdfPCell cellOrder = new PdfPCell() { MinimumHeight = 10, Border = Rectangle.BOTTOM_BORDER | Rectangle.LEFT_BORDER | Rectangle.RIGHT_BORDER | Rectangle.TOP_BORDER, HorizontalAlignment = Element.ALIGN_CENTER };
-            
+
             cellOrder.Phrase = new Phrase("No", bold_font_small);
             tableOrder.AddCell(cellOrder);
             cellOrder.Phrase = new Phrase("Artikel", bold_font_small);
@@ -169,8 +190,7 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
 
             foreach (var ro in viewModel.SalesContractROs)
             {
-                var getQty = ro.Items.FirstOrDefault(x => x.Quantity == 0); // mengecek apakah qty item yang dimasukkan berjumlah 0
-                if (ro.Items != null && ro.Items.Count > 0 && getQty == null)
+                if (ro.Items != null && ro.Items.Count > 0)
                 {
                     foreach (var item in ro.Items)
                     {
@@ -242,6 +262,7 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
                         totalQtyPerUnit[ro.Uom.Unit] += ro.Quantity;
                     }
                 }
+
             }
 
             cellOrder.Phrase = new Phrase("", bold_font_small);
@@ -308,7 +329,7 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             tableDetailOrder.HorizontalAlignment = 0;
             PdfPCell cellDetailOrder = new PdfPCell() { MinimumHeight = 10, Border = Rectangle.BOTTOM_BORDER | Rectangle.LEFT_BORDER | Rectangle.RIGHT_BORDER | Rectangle.TOP_BORDER, HorizontalAlignment = Element.ALIGN_MIDDLE };
             PdfPCell CellDetailCenter = new PdfPCell() { MinimumHeight = 10, Border = Rectangle.BOTTOM_BORDER | Rectangle.LEFT_BORDER | Rectangle.RIGHT_BORDER | Rectangle.TOP_BORDER, HorizontalAlignment = Element.ALIGN_CENTER };
-           
+
             cellDetailOrder.Phrase = new Phrase("FOB/CMT/CM", bold_font);
             tableDetailOrder.AddCell(cellDetailOrder);
             CellDetailCenter.Phrase = new Phrase(viewModel.FOB, normal_font);
@@ -530,20 +551,29 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             signature.SetWidths(new float[] { 1f, 1f });
             cell_signature.Phrase = new Phrase("Sukoharjo," + " " + viewModel.CreatedUtc.AddHours(timeoffset).ToString("dd MMMM yyyy"/*, new CultureInfo("id - ID")*/), normal_font);
             signature.AddCell(cell_signature);
-            cell_signature.Phrase = new Phrase("", normal_font);
-            signature.AddCell(cell_signature);
-            cell_signature.Phrase = new Phrase("Penjual,", normal_font);
-            signature.AddCell(cell_signature);
-            cell_signature.Phrase = new Phrase("Pembeli, ", normal_font);
+            cell_signature.Phrase = new Phrase(" ", normal_font);
             signature.AddCell(cell_signature);
 
-            cell_signature.Phrase = new Phrase("", normal_font);
+           
+            cell_signature.Phrase = new Phrase("Penjual, ", normal_font);
             signature.AddCell(cell_signature);
-            cell_signature.Phrase = new Phrase("", normal_font);
+          
+            cell_signature.Phrase = new Phrase(" ", normal_font);
+            signature.AddCell(cell_signature);
+            cell_signature.Phrase = new Phrase("PT Ambassador Garmindo", normal_font);
+            signature.AddCell(cell_signature);
+            cell_signature.Phrase = new Phrase("Pembeli,", normal_font);
+            signature.AddCell(cell_signature);
+
+            cell_signature.Phrase = new Phrase(" ", normal_font);
+            signature.AddCell(cell_signature);
+            cell_signature.Phrase = new Phrase(" ", normal_font);
+            signature.AddCell(cell_signature);
+            cell_signature.Phrase = new Phrase(" ", normal_font);
             signature.AddCell(cell_signature);
 
             string signatureArea = string.Empty;
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 4; i++)
             {
                 signatureArea += Environment.NewLine;
             }
@@ -559,16 +589,19 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             signature.AddCell(cell_signature);
             cell_signature.Phrase = new Phrase(" ", normal_font);
             signature.AddCell(cell_signature);
+            cell_signature.Phrase = new Phrase(" ", normal_font);
+            signature.AddCell(cell_signature);
+            
 
             cell_signature.Phrase = new Phrase("( Haenis Gunarto )", normal_font);
             signature.AddCell(cell_signature);
             cell_signature.Phrase = new Phrase("(" + viewModel.RecipientName + ")", normal_font);
             signature.AddCell(cell_signature);
-            cell_signature.Phrase = new Phrase("PT Ambassador Garmindo", normal_font);
+            cell_signature.Phrase = new Phrase("Direktur", normal_font);
             signature.AddCell(cell_signature);
-            cell_signature.Phrase = new Phrase(buyerName, normal_font);
-            signature.AddCell(cell_signature);
-            cellIContentRights.Phrase = new Phrase("");
+            //cell_signature.Phrase = new Phrase(buyerName, normal_font);
+            //signature.AddCell(cell_signature);
+            cellIContentRights.Phrase = new Phrase(" ");
             signature.AddCell(cellIContentRights);
 
             PdfPCell signatureCell = new PdfPCell(signature); // dont remove
