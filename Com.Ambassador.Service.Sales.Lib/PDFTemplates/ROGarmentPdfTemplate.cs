@@ -278,8 +278,8 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
                 {
                     //cell_fabric_left.Phrase = new Phrase(materialModel.Category.SubCategory != null ? materialModel.Category.SubCategory : "", normal_font);
                     //table_fabric.AddCell(cell_fabric_left);
-
-                    cell_fabric_left.Phrase = new Phrase(materialModel.PO_SerialNumber, normal_font);
+                    var PO = materialModel.IsPRMaster.Value ? materialModel.POMaster : materialModel.PO_SerialNumber;
+                    cell_fabric_left.Phrase = new Phrase(PO, normal_font);
                     table_fabric.AddCell(cell_fabric_left);
 
                     cell_fabric_left.Phrase = new Phrase(materialModel.Product.Code, normal_font);
@@ -397,7 +397,8 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             {
                 if (materialModel.Category.name != "FABRIC")
                 {
-                    cell_acc_left.Phrase = new Phrase(materialModel.PO_SerialNumber, normal_font);
+                    var POFab = materialModel.IsPRMaster.Value ? materialModel.POMaster : materialModel.PO_SerialNumber;
+                    cell_acc_left.Phrase = new Phrase(POFab, normal_font);
                     table_accessories.AddCell(cell_acc_left);
 
                     cell_acc_left.Phrase = new Phrase(materialModel.Product.Code, normal_font);
