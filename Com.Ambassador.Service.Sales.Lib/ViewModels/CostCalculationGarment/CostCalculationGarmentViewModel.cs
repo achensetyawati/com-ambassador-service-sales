@@ -108,6 +108,11 @@ namespace Com.Ambassador.Service.Sales.Lib.ViewModels.CostCalculationGarment
                 yield return new ValidationResult("Sales Contract harus diisi", new List<string> { "PreSalesContract" });
             }
 
+            if(this.Rate.Value == 0)
+            {
+                yield return new ValidationResult("Rate harus diisi", new List<string> { "Rate" });
+            }
+
             if (string.IsNullOrWhiteSpace(this.Article))
                 yield return new ValidationResult("Nama Artikel harus diisi", new List<string> { "Article" });
             if (Unit == null || string.IsNullOrWhiteSpace(this.Unit.Code))
