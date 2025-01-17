@@ -397,7 +397,7 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
             {
                 if (materialModel.Category.name != "FABRIC")
                 {
-                    var POFab = materialModel.IsPRMaster.Value ? materialModel.POMaster : materialModel.PO_SerialNumber;
+                    var POFab = materialModel.IsPRMaster!=null && materialModel.IsPRMaster.Value ? materialModel.POMaster : materialModel.PO_SerialNumber;
                     cell_acc_left.Phrase = new Phrase(POFab, normal_font);
                     table_accessories.AddCell(cell_acc_left);
 
