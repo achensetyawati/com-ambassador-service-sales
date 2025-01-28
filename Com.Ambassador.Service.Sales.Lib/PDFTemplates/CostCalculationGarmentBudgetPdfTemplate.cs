@@ -473,7 +473,7 @@ namespace Com.Ambassador.Service.Sales.Lib.PDFTemplates
 					table_ccm.AddCell(cell_ccm);
 				}
 
-                var PO = viewModel.CostCalculationGarment_Materials[i].IsPRMaster.Value ? viewModel.CostCalculationGarment_Materials[i].POMaster : viewModel.CostCalculationGarment_Materials[i].PO_SerialNumber;
+                var PO = viewModel.CostCalculationGarment_Materials[i].IsPRMaster.GetValueOrDefault() ? viewModel.CostCalculationGarment_Materials[i].POMaster : viewModel.CostCalculationGarment_Materials[i].PO_SerialNumber;
 
                 cell_ccm.HorizontalAlignment = Element.ALIGN_CENTER;
 				cell_ccm.Phrase = new Phrase(PO, normal_font);
