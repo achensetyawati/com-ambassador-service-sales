@@ -288,7 +288,7 @@ namespace Com.Ambassador.Service.Sales.WebApi
             string connectionStringLocalMerchandiser = Configuration.GetConnectionString("LocalMerchandiserConnection") ?? Configuration["LocalMerchandiserConnection"];
             string connectionStringPurchasing = Configuration.GetConnectionString("PurchasingConnection") ?? Configuration["PurchasingConnection"];
 
-            Com.Ambassador.Service.Sales.Lib.Helpers.APIEndpoint.ConnectionString = connectionString;
+            Lib.Helpers.APIEndpoint.ConnectionString = connectionString;
             /* Register */
             services.AddDbContext<SalesDbContext>(options => options.UseSqlServer(connectionString));
             services.AddTransient<ILocalMerchandiserDbContext>(s => new LocalMerchandiserDbContext(connectionStringLocalMerchandiser));
